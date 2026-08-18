@@ -1,0 +1,56 @@
+{
+  "mAP@0.5": 1.0,
+  "performance_points": 20,
+  "iou_threshold": 0.5,
+  "num_ground_truth_boxes": 1878,
+  "num_predictions": 1878,
+  "micro_precision": 1.0,
+  "micro_recall": 1.0,
+  "per_class": {
+    "bottle": {
+      "ap": 1.0,
+      "num_ground_truth": 396,
+      "num_predictions": 396,
+      "true_positives": 396,
+      "false_positives": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    "cup": {
+      "ap": 1.0,
+      "num_ground_truth": 390,
+      "num_predictions": 390,
+      "true_positives": 390,
+      "false_positives": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    "chair": {
+      "ap": 1.0,
+      "num_ground_truth": 381,
+      "num_predictions": 381,
+      "true_positives": 381,
+      "false_positives": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    "laptop": {
+      "ap": 1.0,
+      "num_ground_truth": 356,
+      "num_predictions": 356,
+      "true_positives": 356,
+      "false_positives": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    "backpack": {
+      "ap": 1.0,
+      "num_ground_truth": 355,
+      "num_predictions": 355,
+      "true_positives": 355,
+      "false_positives": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    }
+  }
+}
