@@ -41,6 +41,14 @@ class ObjectDetectionDataset(Dataset):
                 ToTensorV2()
             ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["labels"]))
 
+        else:
+            # BỔ SUNG: Transform dành riêng cho tập Validation (chỉ Resize và Normalize, không xoay/crop)
+            self.transform = A.Compose([
+                A.Resize(height=img_size, width=img_size),
+                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                ToTensorV2()
+            ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["labels"]))
+
     def __len__(self):
         return len(self.img_ids)
 
