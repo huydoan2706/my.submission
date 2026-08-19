@@ -37,7 +37,9 @@ class DetectionLoss(nn.Module):
         self.mse = nn.MSELoss(reduction='none')
 
     def forward(self, preds, targets):
+        preds = preds.permute(0, 2, 3, 1).contiguous()
         # preds: (B, S, S, 5+C)
+
         B = preds.shape[0]
         device = preds.device
 

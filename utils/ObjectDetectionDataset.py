@@ -74,10 +74,10 @@ class ObjectDetectionDataset(Dataset):
             bboxes = [[0, 0, 1, 1]]
             labels = [0]
 
-        transformed = self.transform(image=image, bboxes=bboxes, class_labels=labels)
+        transformed = self.transform(image=image, bboxes=bboxes, labels=labels)
         image = transformed['image']
         bboxes = transformed['bboxes']
-        labels = transformed['class_labels']
+        labels = transformed['labels']
 
         # Chuyen bbox ve dang [cx, cy, w, h] chuan hoa [0, 1]
         targets = []

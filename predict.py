@@ -7,9 +7,9 @@ import albumentations as A
 import torch
 from albumentations import ToTensorV2
 from torch.utils.data import Dataset, DataLoader
-import utils.DetectionLoss as DetectionLoss
-import utils.ObjectDetectionDataset as ObjectDetectionDataset
-import utils.SimpleDetector as SimpleDetector
+from utils.DetectionLoss import DetectionLoss
+from utils.ObjectDetectionDataset import ObjectDetectionDataset
+from utils.SimpleDetector import SimpleDetector
 import tqdm
 import numpy as np
 import cv2

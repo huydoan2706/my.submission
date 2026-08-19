@@ -2,10 +2,10 @@ import argparse
 import os
 import torch
 from torch.utils.data import Dataset, DataLoader
-import utils.DetectionLoss as DetectionLoss
-import utils.ObjectDetectionDataset as ObjectDetectionDataset
-import utils.SimpleDetector as SimpleDetector
-import tqdm
+from utils.DetectionLoss import DetectionLoss
+from utils.ObjectDetectionDataset import ObjectDetectionDataset
+from utils.SimpleDetector import SimpleDetector
+from tqdm import tqdm
 
 
 def collate_fn(batch):
@@ -31,7 +31,7 @@ def train(args):
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
-    os.makedirs(args.checkpoint, exist_ok=True)
+    os.makedirs(args.checkpoint_dir, exist_ok=True)
     best_val_loss = float('inf')
 
     for epoch in range(1, args.epochs + 1):
