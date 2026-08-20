@@ -37,8 +37,6 @@ class DetectionLoss(nn.Module):
         self.mse = nn.MSELoss(reduction='none')
 
     def forward(self, preds, targets):
-        preds = preds.permute(0, 2, 3, 1).contiguous()
-        # preds: (B, S, S, 5+C)
 
         B = preds.shape[0]
         device = preds.device
@@ -72,8 +70,20 @@ class DetectionLoss(nn.Module):
 
         # Box (CIoU)
         pred_box = preds[..., 1:5].sigmoid()  # cx,cy,w,h
-        ciou = bbox_ciou(pred_box, target_box)
-        loss_box = ((1 - ciou) * obj_mask).sum() / max(B, 1)
+
+        # Tạo mask boolean để lọc các ô có chứa vật thể
+        obj_bool = obj_mask.bool()
+
+        if obj_bool.sum() > 0:
+            # Chỉ trích xuất và tính toán CIoU cho các dự đoán & mục tiêu hợp lệ
+            valid_pred_box = pred_box[obj_bool]
+            valid_target_box = target_box[obj_bool]
+
+            # Hàm xử lý mảng 1D thay vì toàn bộ grid 3D
+            ciou = bbox_ciou(valid_pred_box, valid_target_box)
+            loss_box = (1 - ciou).sum() / max(B, 1)
+        else:
+            loss_box = torch.tensor(0.0, device=device)
 
         # Classification
         pred_cls = preds[..., 5:]

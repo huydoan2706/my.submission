@@ -27,6 +27,6 @@ class SimpleDetector(nn.Module):
         x = self.backbone(x)
         x = self.pool(x)
         x = self.head(x)   # (B, 5+C, S, S)
-        x.permute(0, 2, 3, 1).contiguous()   # (B, S, S, 5+C)
+        x = x.permute(0, 2, 3, 1).contiguous()   # (B, S, S, 5+C)
 
         return x
