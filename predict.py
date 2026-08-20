@@ -5,12 +5,12 @@ from pathlib import Path
 
 import albumentations as A
 import torch
-from albumentations import ToTensorV2
+from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset, DataLoader
 from utils.DetectionLoss import DetectionLoss
 from utils.ObjectDetectionDataset import ObjectDetectionDataset
 from utils.SimpleDetector import SimpleDetector
-import tqdm
+from tqdm import tqdm
 import numpy as np
 import cv2
 
@@ -87,7 +87,11 @@ def predict_one(model, image_path, classes, img_size, conf_thres=0.3, iou_thres=
             xmin = max(0, cx - w/2)
             ymin = max(0, cy - h/2)
             xmax = min(w0, cx + w/2)
-            ymax = min(w0, cy + h/2)
+            ymax = min(h0, cy + h/2)
+
+            # Bỏ qua các khung rỗng (empty box)
+            if xmax <= xmin or ymax <= ymin:
+                continue
 
             boxes.append([xmin, ymin, xmax, ymax])
             scores.append(conf)
@@ -139,30 +143,34 @@ def main(args):
 
     # Lay danh sach anh
     image_dir = Path(args.image_dir)
-    extensions = {'jpg', 'jpeg', 'png', 'webp', '.bmp', '.tif', '.tiff'}
+    extensions = {'.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff'}
     image_files = sorted([p for p in image_dir.iterdir() if p.suffix.lower() in extensions])
 
     predictions = []
     for img_path in tqdm(image_files, desc='Predicting'):
         dets = predict_one(model, str(img_path), classes, img_size=img_size,
                            conf_thres=args.conf_thres, iou_thres=args.iou_thres)
-        for d in dets:
-            predictions.append(
-                {
-                    "image_id": img_path.name,
-                    "class": d['class'],
-                    "bbox": d['bbox'],  # xmin, ymin, xmax, ymax
-                    "score": d['score']
-                }
-            )
 
-    # Luu ket qua
-    output = {
-        'classes': classes,
-        'predictions': predictions
-    }
+        # Tạo mảng chứa các "đối tượng" bounding box
+        boxes = []
+        for d in dets:
+            boxes.append({
+                "bbox": d['bbox'],
+                "confidence": d['score'],
+                "class": d['class']
+            })
+
+        # Gán mảng các đối tượng đó vào key "boxes" của ảnh
+        predictions.append(
+            {
+                "image_id": img_path.name,
+                "boxes": boxes
+            }
+        )
+
+    # Lưu kết quả
     with open(args.output, "w", encoding='utf-8') as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
+        json.dump(predictions, f, ensure_ascii=False, indent=2)
 
     print(f"Saved {len(predictions)} predictions to {args.output}")
 
