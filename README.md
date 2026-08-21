@@ -64,6 +64,20 @@ parser.add_argument("--lr", type=float, default=1e-4)
 parser.add_argument("--workers", type=int, default=4)
 ```
 
+Trong đó:
+
+- `train_data`: đường dẫn đến file dữ liệu huấn luyện.
+- `val_data`: đường dẫn đến file dữ liệu kiểm định.
+- `image_dir`: đường dẫn đến folder ảnh huấn luyện.
+- `val_image_dir`: đường dẫn đến folder ảnh kiểm định. 
+- `checkpoint_dir`: đường dẫn đến folder để lưu trọng số. 
+- `img_size`: kích thước ảnh.
+- `grid_size`: kích thước ma trận lưới.
+- `batch_size`: kích thước mỗi batch dữ liệu. 
+- `epochs`: số epoch huấn luyện.
+- `lr`: viết tắt của learning rate (tốc độ học).
+- `workers`: Số luồng/tiến trình của CPU được sử dụng song song để đọc ảnh từ ổ cứng và thực hiện biến đổi dữ liệu trước khi huấn luyện.
+
 Lệnh huấn luyện mô hình theo các đối số mặc định:
 
 ```bash
@@ -103,6 +117,15 @@ parser.add_argument("--conf_thres", type=float, default=0.3)
 parser.add_argument("--iou_thres", type=float, default=0.45)
 ```
 
+Trong đó:
+
+- `image_dir`: đường dẫn đến folder ảnh kiểm định. 
+- `output`: tên file được dùng để ghi lại kết quả dự đoán của mô hình.
+- `checkpoint_dir`: đường dẫn đến folder đã lưu trọng số. 
+- `checkpoint`: đường dẫn cụ thể đến file trọng số.
+- `conf_thres`: ngưỡng độ tin cậy của dự đoán lớp. 
+- `iou_thres`: ngưỡng IoU.
+
 Lệnh suy luận theo các đối số mặc định: 
 
 ```bash
@@ -130,3 +153,9 @@ python public/tools/evaluate_predictions.py \
   --predictions val_predictions.json \
   --output val_score.json
 ```
+
+Trong đó: 
+
+- `ground_truth`: đường dẫn tới file dữ liệu kiểm định.
+- `predictions`: đường dẫn tới file ghi lại kết quả dự đoán. 
+- `output`: tên file ghi lại điểm của mô hình. 
