@@ -3,7 +3,6 @@ import torch.nn as nn
 
 
 def bbox_ciou(box1, box2, eps=1e-7):
-    # box = [cx, cy, w, h]
     b1_x1, b1_y1 = box1[..., 0] - box1[..., 2] / 2, box1[..., 1] - box1[..., 3] / 2
     b1_x2, b1_y2 = box1[..., 0] + box1[..., 2] / 2, box1[..., 1] + box1[..., 3] / 2
     b2_x1, b2_y1 = box2[..., 0] - box2[..., 2] / 2, box2[..., 1] - box2[..., 3] / 2
@@ -17,13 +16,13 @@ def bbox_ciou(box1, box2, eps=1e-7):
     cw = torch.max(b1_x2, b2_x2) - torch.min(b1_x1, b2_x1)
     ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)
 
-    c2 = cw**2 + ch**2 + eps
-    rho2 = ((box2[..., 0] - box1[..., 0])**2 + (box2[..., 1] - box1[..., 1])**2)
+    c2 = cw ** 2 + ch ** 2 + eps
+    rho2 = ((box2[..., 0] - box1[..., 0]) ** 2 + (box2[..., 1] - box1[..., 1]) ** 2)
     v = (4 / (torch.pi ** 2)) * torch.pow(torch.atan(box2[..., 2] / box2[..., 3]) -
-                                        torch.atan(box1[..., 2] / box1[..., 3]), 2)
+                                          torch.atan(box1[..., 2] / box1[..., 3]), 2)
 
     with torch.no_grad():
-        alpha = v / (v-iou+1+eps)
+        alpha = v / (v - iou + 1 + eps)
 
     return iou - (rho2 / c2 + v / alpha)
 
@@ -34,10 +33,8 @@ class DetectionLoss(nn.Module):
         self.num_classes = num_classes
         self.S = grid_size
         self.bce = nn.BCEWithLogitsLoss(reduction='none')
-        self.mse = nn.MSELoss(reduction='none')
 
     def forward(self, preds, targets):
-
         B = preds.shape[0]
         device = preds.device
 
@@ -45,6 +42,11 @@ class DetectionLoss(nn.Module):
         noobj_mask = torch.ones(B, self.S, self.S, device=device)
         target_box = torch.zeros(B, self.S, self.S, 4, device=device)
         target_cls = torch.zeros(B, self.S, self.S, self.num_classes, device=device)
+
+        grid_y, grid_x = torch.meshgrid(torch.arange(self.S, device=device),
+                                        torch.arange(self.S, device=device), indexing='ij')
+        grid_x = grid_x.float().expand(B, -1, -1)
+        grid_y = grid_y.float().expand(B, -1, -1)
 
         for b in range(B):
             for t in targets[b]:
@@ -62,35 +64,42 @@ class DetectionLoss(nn.Module):
                 target_box[b, j, i] = torch.tensor([cx, cy, w, h], device=device)
                 target_cls[b, j, i, int(cls)] = 1
 
-        # Objectness
+        # Objectness Loss (Sử dụng hệ số tiêu chuẩn của YOLO, chia cho B)
         pred_obj = preds[..., 0]
-        loss_obj = self.bce(pred_obj, obj_mask).sum() / max(B, 1)
-        loss_noobj = self.bce(pred_obj, torch.zeros_like(pred_obj)) * noobj_mask
-        loss_noobj = loss_noobj.sum() / max(B, 1)
 
-        # Box (CIoU)
-        pred_box = preds[..., 1:5].sigmoid()  # cx,cy,w,h
+        # Thêm thủ thuật Focal Loss thủ công nhẹ nhàng để ép mô hình dập tắt Background
+        bce_obj = self.bce(pred_obj, obj_mask)
+        pt = torch.exp(-bce_obj)
+        focal_weight = (1 - pt) ** 2.0
+        focal_loss_obj = focal_weight * bce_obj
 
-        # Tạo mask boolean để lọc các ô có chứa vật thể
+        loss_obj = (focal_loss_obj * obj_mask).sum() / B
+        loss_noobj = (focal_loss_obj * noobj_mask).sum() / B
+
+        # Box Giải mã
+        pred_box_raw = preds[..., 1:5]
+        pred_cx = (pred_box_raw[..., 0].sigmoid() + grid_x) / self.S
+        pred_cy = (pred_box_raw[..., 1].sigmoid() + grid_y) / self.S
+        pred_w = pred_box_raw[..., 2].sigmoid()
+        pred_h = pred_box_raw[..., 3].sigmoid()
+        pred_box_decoded = torch.stack([pred_cx, pred_cy, pred_w, pred_h], dim=-1)
+
+        # Box Loss (CIoU) - Chỉ tính trên các ô có vật thể
         obj_bool = obj_mask.bool()
-
         if obj_bool.sum() > 0:
-            # Chỉ trích xuất và tính toán CIoU cho các dự đoán & mục tiêu hợp lệ
-            valid_pred_box = pred_box[obj_bool]
+            valid_pred_box = pred_box_decoded[obj_bool]
             valid_target_box = target_box[obj_bool]
-
-            # Hàm xử lý mảng 1D thay vì toàn bộ grid 3D
             ciou = bbox_ciou(valid_pred_box, valid_target_box)
-            loss_box = (1 - ciou).sum() / max(B, 1)
+            loss_box = (1 - ciou).sum() / B
         else:
             loss_box = torch.tensor(0.0, device=device)
 
-        # Classification
+        # Classification Loss
         pred_cls = preds[..., 5:]
-        loss_cls = self.bce(pred_cls, target_cls)
-        loss_cls = (loss_cls.sum(dim=-1) * obj_mask).sum() / max(B, 1)
+        loss_cls = (self.bce(pred_cls, target_cls).sum(dim=-1) * obj_mask).sum() / B
 
-        total = loss_obj + 0.5 * loss_noobj + 5.0 * loss_box + loss_cls
+        # Tổ hợp Loss với trọng số chuẩn mực
+        total = 1.0 * loss_obj + 0.5 * loss_noobj + 5.0 * loss_box + 1.0 * loss_cls
 
         return total, {
             'obj': loss_obj.item(),
@@ -98,4 +107,3 @@ class DetectionLoss(nn.Module):
             'box': loss_box.item(),
             'cls': loss_cls.item()
         }
-

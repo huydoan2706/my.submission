@@ -77,7 +77,12 @@ def predict_one(model, image_path, classes, img_size, conf_thres=0.3, iou_thres=
             if conf < conf_thres:
                 continue
 
-            cx, cy, w, h = torch.sigmoid(pred[j, i, 1:5]).tolist()
+            cx_offset, cy_offset, w, h = torch.sigmoid(pred[j, i, 1:5]).tolist()
+
+            # Giải mã từ hệ quy chiếu của Ô Lưới (Cell) ra Toàn cục
+            cx = (cx_offset + i) / S
+            cy = (cy_offset + j) / S
+
             # Dua toa do ve anh goc
             cx *= w0
             cy *= h0

@@ -14,6 +14,9 @@ class SimpleDetector(nn.Module):
 
         # Detection head
         self.head = nn.Sequential(
+            nn.Conv2d(512, 512, 3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
             nn.Conv2d(512, 256, 3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
