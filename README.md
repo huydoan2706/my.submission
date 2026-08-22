@@ -148,7 +148,7 @@ python predict.py \
 Sau khi thu được file kết quả suy luận `val_predictions.json`, ta thực hiện đánh giá thông qua lệnh sau:
 
 ```bash
-python public/tools/evaluate_predictions.py \
+python ./indoor5-v2-student/public/tools/evaluate_predictions.py \
   --ground_truth ./indoor5-v2-student/public/annotations/val.json \
   --predictions val_predictions.json \
   --output val_score.json
