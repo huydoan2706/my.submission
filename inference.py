@@ -69,7 +69,7 @@ def visualize_predictions(image_dir, pred_file, output_dir, conf_threshold=0.2):
 if __name__ == '__main__':
     # Chạy hàm với các đường dẫn của bạn
     visualize_predictions(
-        image_dir="public/val/images",
+        image_dir="./indoor5-v2-student/public/val/images",
         pred_file="val_predictions.json",
         output_dir="visualized_preds",
         conf_threshold=0.1  # Set thấp (0.1) để xem mô hình đang "nghĩ" gì ở mức độ thấp nhất

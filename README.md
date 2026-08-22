@@ -158,4 +158,10 @@ Trong đó:
 
 - `ground_truth`: đường dẫn tới file dữ liệu kiểm định.
 - `predictions`: đường dẫn tới file ghi lại kết quả dự đoán. 
-- `output`: tên file ghi lại điểm của mô hình. 
+- `output`: tên file ghi lại điểm của mô hình.
+
+Ngoài ra, nếu muốn theo dõi kết quả phát hiện ở từng ảnh, ta có thể chạy file `inference.py`, khi đó các ảnh kiểm định sẽ được gán thêm những hộp phát hiện kèm lớp của nó và được lưu về folder `visualized_preds`.
+
+```bash
+python inference.py
+```
