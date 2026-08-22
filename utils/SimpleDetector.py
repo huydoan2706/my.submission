@@ -17,9 +17,13 @@ class SimpleDetector(nn.Module):
             nn.Conv2d(512, 512, 3, padding=1),
             nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
+            nn.Dropout2d(0.3),  # Dropout=0.3, tránh overfit
+
             nn.Conv2d(512, 256, 3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
+            nn.Dropout2d(0.3),  # Dropout=0.3, tránh overfit
+
             nn.Conv2d(256, self.num_output, 1)
         )
 

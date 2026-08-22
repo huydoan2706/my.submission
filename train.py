@@ -28,7 +28,7 @@ def train(args):
 
     model = SimpleDetector(num_classes=len(train_dataset.classes), grid_size=args.grid_size).to(device)
     criterion = DetectionLoss(num_classes=len(train_dataset.classes), grid_size=args.grid_size)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-2)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
     os.makedirs(args.checkpoint_dir, exist_ok=True)
